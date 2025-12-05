@@ -2,24 +2,20 @@ import { useState, useEffect } from 'react';
 import { subscribeToUploadProgress } from '../services/upload';
 
 export function useUploadProgress(taskId) {
-  const [progress, setProgress] = useState(null);
-  const [error, setError] = useState(null);
+  const [state, setState] = useState({ taskId: null, progress: null, error: null });
 
   useEffect(() => {
     if (!taskId) {
-      setProgress(null);
-      setError(null);
       return;
     }
 
     const unsubscribe = subscribeToUploadProgress(
       taskId,
       (progressData) => {
-        setProgress(progressData);
-        setError(null);
+        setState({ taskId, progress: progressData, error: null });
       },
       (errorData) => {
-        setError(errorData);
+        setState((prev) => ({ ...prev, taskId, error: errorData }));
       }
     );
 
@@ -28,5 +24,12 @@ export function useUploadProgress(taskId) {
     };
   }, [taskId]);
 
-  return { progress, error, isConnected: !!taskId };
+  // Return null values if taskId doesn't match (means it changed)
+  const isCurrentTask = state.taskId === taskId;
+
+  return {
+    progress: isCurrentTask ? state.progress : null,
+    error: isCurrentTask ? state.error : null,
+    isConnected: !!taskId
+  };
 }
