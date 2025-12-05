@@ -27,7 +27,7 @@ def process_csv_upload_task(self, task_id, file_path):
     try:
         # Get upload task
         upload_task = UploadTask.objects.get(task_id=task_id)
-        
+
         upload_task.status = 'processing'
         upload_task.started_at = timezone.now()
         upload_task.save()
@@ -53,14 +53,14 @@ def process_csv_upload_task(self, task_id, file_path):
             upload_task.completed_at = timezone.now()
             upload_task.error_message = "CSV file contains headers but no data rows"
             upload_task.save()
-            
+
             # Clean up file
             if os.path.exists(file_path):
                 try:
                     os.remove(file_path)
                 except OSError:
                     pass
-            
+
             # Trigger webhook
             send_webhook_task.delay(
                 webhook_id=None,
@@ -74,7 +74,7 @@ def process_csv_upload_task(self, task_id, file_path):
                     'warning': 'No data rows to process'
                 }
             )
-            
+
             return {
                 'status': 'completed',
                 'processed': 0,
@@ -92,7 +92,7 @@ def process_csv_upload_task(self, task_id, file_path):
 
         with open(file_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
-            
+
             # Read first row to initialize fieldnames
             first_row = None
             try:
@@ -271,7 +271,7 @@ def _process_chunk(chunk):
                     }
                 )
 
-            except Exception as e:
+            except Exception:
                 # Continue processing other products
                 continue
 

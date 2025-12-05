@@ -120,7 +120,7 @@ def upload_status(request, task_id):
             {'error': 'Upload task not found.'},
             status=status.HTTP_404_NOT_FOUND
         )
-    except Exception as e:
+    except Exception:
         raise
 
 
@@ -202,12 +202,12 @@ def upload_history(request):
     try:
         tasks = UploadTask.objects.all().order_by('-created_at')[:50]
         serializer = UploadTaskListSerializer(tasks, many=True)
-        
+
         count = tasks.count()
 
         return Response({
             'count': count,
             'results': serializer.data
         }, status=status.HTTP_200_OK)
-    except Exception as e:
+    except Exception:
         raise
