@@ -27,6 +27,7 @@ def process_csv_upload_task(self, task_id, file_path):
     try:
         # Get upload task
         upload_task = UploadTask.objects.get(task_id=task_id)
+        
         upload_task.status = 'processing'
         upload_task.started_at = timezone.now()
         upload_task.save()
@@ -35,8 +36,52 @@ def process_csv_upload_task(self, task_id, file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
             total_rows = sum(1 for _ in f) - 1  # Exclude header
 
+        # Validate file is not empty
+        if total_rows < 0:
+            error_msg = "CSV file is empty or contains no data rows"
+            raise ValueError(error_msg)
+
         upload_task.total_rows = total_rows
         upload_task.save()
+
+        # Handle empty CSV (only header, no data rows)
+        if total_rows == 0:
+            upload_task.status = 'completed'
+            upload_task.processed_rows = 0
+            upload_task.successful_rows = 0
+            upload_task.failed_rows = 0
+            upload_task.completed_at = timezone.now()
+            upload_task.error_message = "CSV file contains headers but no data rows"
+            upload_task.save()
+            
+            # Clean up file
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+            
+            # Trigger webhook
+            send_webhook_task.delay(
+                webhook_id=None,
+                event='upload.completed',
+                payload={
+                    'task_id': str(task_id),
+                    'filename': upload_task.filename,
+                    'total_rows': 0,
+                    'successful_rows': 0,
+                    'failed_rows': 0,
+                    'warning': 'No data rows to process'
+                }
+            )
+            
+            return {
+                'status': 'completed',
+                'processed': 0,
+                'successful': 0,
+                'failed': 0,
+                'warning': 'CSV file contains no data rows'
+            }
 
         # Process CSV in chunks
         CHUNK_SIZE = 5000
@@ -47,15 +92,40 @@ def process_csv_upload_task(self, task_id, file_path):
 
         with open(file_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
+            
+            # Read first row to initialize fieldnames
+            first_row = None
+            try:
+                first_row = next(reader)
+            except StopIteration:
+                error_msg = "CSV file is empty or contains no data rows"
+                raise ValueError(error_msg)
 
             # Validate headers
             required_fields = ['sku', 'name']
-            if not all(field in reader.fieldnames for field in required_fields):
-                raise ValueError(f"CSV must contain fields: {', '.join(required_fields)}")
+            if not reader.fieldnames or not all(field in reader.fieldnames for field in required_fields):
+                error_msg = f"CSV must contain fields: {', '.join(required_fields)}. Found: {reader.fieldnames}"
+                raise ValueError(error_msg)
 
             chunk = []
 
-            for row_num, row in enumerate(reader, start=1):
+            # Process the first row we already read
+            if first_row:
+                try:
+                    product_data = {
+                        'sku': first_row['sku'].strip(),
+                        'name': first_row['name'].strip(),
+                        'description': first_row.get('description', '').strip(),
+                        'active': True
+                    }
+                    chunk.append(product_data)
+                except Exception as e:
+                    failed += 1
+                    error_msg = f"Row 1: {str(e)}"
+                    errors.append(error_msg)
+
+            # Process remaining rows
+            for row_num, row in enumerate(reader, start=2):
                 try:
                     # Prepare product data
                     product_data = {
@@ -81,7 +151,8 @@ def process_csv_upload_task(self, task_id, file_path):
 
                 except Exception as e:
                     failed += 1
-                    errors.append(f"Row {row_num}: {str(e)}")
+                    error_msg = f"Row {row_num}: {str(e)}"
+                    errors.append(error_msg)
                     if len(errors) > 100:  # Limit error messages
                         errors.append("... (more errors)")
                         break
@@ -109,7 +180,10 @@ def process_csv_upload_task(self, task_id, file_path):
 
         # Clean up file
         if os.path.exists(file_path):
-            os.remove(file_path)
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
 
         # Trigger webhook
         send_webhook_task.delay(
@@ -133,26 +207,36 @@ def process_csv_upload_task(self, task_id, file_path):
 
     except Exception as e:
         # Handle errors
-        upload_task = UploadTask.objects.get(task_id=task_id)
-        upload_task.status = 'failed'
-        upload_task.error_message = str(e)
-        upload_task.completed_at = timezone.now()
-        upload_task.save()
+        try:
+            upload_task = UploadTask.objects.get(task_id=task_id)
+            upload_task.status = 'failed'
+            upload_task.error_message = str(e)
+            upload_task.completed_at = timezone.now()
+            upload_task.save()
+        except Exception:
+            pass
 
         # Clean up file
         if os.path.exists(file_path):
-            os.remove(file_path)
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
 
         # Trigger webhook
-        send_webhook_task.delay(
-            webhook_id=None,
-            event='upload.failed',
-            payload={
-                'task_id': str(task_id),
-                'filename': upload_task.filename,
-                'error': str(e)
-            }
-        )
+        try:
+            upload_task = UploadTask.objects.get(task_id=task_id)
+            send_webhook_task.delay(
+                webhook_id=None,
+                event='upload.failed',
+                payload={
+                    'task_id': str(task_id),
+                    'filename': upload_task.filename,
+                    'error': str(e)
+                }
+            )
+        except Exception:
+            pass
 
         raise
 
@@ -187,7 +271,7 @@ def _process_chunk(chunk):
                     }
                 )
 
-            except Exception:
+            except Exception as e:
                 # Continue processing other products
                 continue
 
