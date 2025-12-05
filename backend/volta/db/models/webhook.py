@@ -66,13 +66,9 @@ class Webhook(models.Model):
 
     def save(self, *args, **kwargs):
         # Generate secret key if not provided
-        is_new = self.pk is None
-        key_generated = False
-        
         if not self.secret_key:
             self.secret_key = secrets.token_urlsafe(32)
-            key_generated = True
-        
+
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -84,12 +80,11 @@ class Webhook(models.Model):
 
     def increment_failure(self):
         """Increment failure count and auto-disable if threshold reached."""
-        old_failure_count = self.failure_count
         self.failure_count += 1
-        
+
         if self.should_auto_disable():
             self.active = False
-        
+
         self.save(update_fields=['failure_count', 'active'])
 
     def reset_failure_count(self):
