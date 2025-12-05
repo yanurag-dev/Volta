@@ -29,6 +29,14 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
 
+    def save_model(self, request, obj, form, change):
+        """Save product in admin."""
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        """Delete product in admin."""
+        super().delete_model(request, obj)
+
 
 @admin.register(UploadTask)
 class UploadTaskAdmin(admin.ModelAdmin):
@@ -84,6 +92,14 @@ class UploadTaskAdmin(admin.ModelAdmin):
         return f"{obj.progress_percentage}%"
     progress_display.short_description = 'Progress'
 
+    def save_model(self, request, obj, form, change):
+        """Save upload task in admin."""
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        """Delete upload task in admin."""
+        super().delete_model(request, obj)
+
 
 @admin.register(Webhook)
 class WebhookAdmin(admin.ModelAdmin):
@@ -132,3 +148,11 @@ class WebhookAdmin(admin.ModelAdmin):
         """Display events as comma-separated string."""
         return ', '.join(obj.events) if obj.events else 'None'
     events_display.short_description = 'Events'
+
+    def save_model(self, request, obj, form, change):
+        """Save webhook in admin."""
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        """Delete webhook in admin."""
+        super().delete_model(request, obj)
