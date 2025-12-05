@@ -83,4 +83,6 @@ jobs:
         run: pip install flake8
 
       - name: Lint with flake8
-        run: flake8 backend/ --count --show-source --statistics --max-line-length=127
+        run: |
+          cd backend
+          flake8 volta/ --count --show-source --statistics
