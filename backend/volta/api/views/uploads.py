@@ -42,34 +42,75 @@ def upload_csv(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Create upload task record
-    upload_task = UploadTask.objects.create(
-        filename=uploaded_file.name,
-        status='pending'
-    )
-
-    # Save file temporarily
     import os
+    import logging
     from django.conf import settings
+    from django.db import transaction
+
+    logger = logging.getLogger(__name__)
 
     upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
     os.makedirs(upload_dir, exist_ok=True)
 
-    file_path = os.path.join(upload_dir, f"{upload_task.task_id}_{uploaded_file.name}")
+    file_path = None
+    upload_task = None
 
-    with open(file_path, 'wb+') as destination:
-        for chunk in uploaded_file.chunks():
-            destination.write(chunk)
+    try:
+        # Wrap DB record creation and file write in atomic transaction
+        with transaction.atomic():
+            # Create upload task record inside transaction
+            upload_task = UploadTask.objects.create(
+                filename=uploaded_file.name,
+                status='pending'
+            )
 
-    # Trigger Celery task
-    process_csv_upload_task.delay(str(upload_task.task_id), file_path)
+            # Generate file path
+            file_path = os.path.join(
+                upload_dir,
+                f"{upload_task.task_id}_{uploaded_file.name}"
+            )
 
-    serializer = UploadTaskSerializer(upload_task)
+            # Save file to disk inside transaction
+            try:
+                with open(file_path, 'wb+') as destination:
+                    for chunk in uploaded_file.chunks():
+                        destination.write(chunk)
+            except IOError as e:
+                logger.error(f"Failed to write uploaded file: {e}")
+                # Clean up partial file if it exists
+                if file_path and os.path.exists(file_path):
+                    os.remove(file_path)
+                raise
 
-    return Response({
-        'message': 'File uploaded successfully. Processing started.',
-        'task': serializer.data
-    }, status=status.HTTP_201_CREATED)
+            # Schedule Celery task only after transaction commits
+            transaction.on_commit(
+                lambda: process_csv_upload_task.delay(
+                    str(upload_task.task_id),
+                    file_path
+                )
+            )
+
+        serializer = UploadTaskSerializer(upload_task)
+
+        return Response({
+            'message': 'File uploaded successfully. Processing started.',
+            'task': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+
+        # Clean up: remove file if it exists
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except OSError as os_err:
+                logger.error(f"Failed to clean up file {file_path}: {os_err}")
+
+        # Transaction rollback will handle DB cleanup
+        return Response({
+            'error': f'Upload failed: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

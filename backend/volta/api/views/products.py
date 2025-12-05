@@ -45,10 +45,11 @@ def bulk_delete_products(request):
     This endpoint deletes ALL products in the database.
     Should be protected with confirmation in the frontend.
     """
-    count = Product.objects.count()
-    Product.objects.all().delete()
+    # delete() returns a tuple: (total_deleted, {model: count})
+    deleted_info = Product.objects.all().delete()
+    deleted_count = deleted_info[0]
 
     return Response({
-        'message': f'Successfully deleted {count} products.',
-        'deleted_count': count
+        'message': f'Successfully deleted {deleted_count} products.',
+        'deleted_count': deleted_count
     }, status=status.HTTP_200_OK)
