@@ -1,0 +1,33 @@
+# Django Core
+Django==5.0.1
+djangorestframework==3.14.0
+django-filter==24.1
+django-cors-headers==4.3.1
+
+# Database
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
+
+# Celery + Message Queue
+celery==5.3.6
+redis==5.0.1
+kombu==5.3.5
+amqp==5.2.0
+
+# Progress Streaming
+django-eventstream==5.2.0
+
+# Environment
+python-decouple==3.8
+python-dotenv==1.0.0
+
+# Web Server
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Utilities
+requests==2.31.0
+pandas==2.2.0
+
+# Development
+django-extensions==3.2.3
