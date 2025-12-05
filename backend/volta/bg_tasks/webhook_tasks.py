@@ -63,7 +63,7 @@ def send_webhook_task(self, webhook_id, event, payload):
                 'X-Webhook-Event': event,
                 'User-Agent': 'Volta-Webhook/1.0'
             }
-            
+
             if signature:
                 headers['X-Webhook-Signature'] = signature
 
@@ -120,7 +120,7 @@ def _generate_signature(secret_key, payload):
     """
     if not secret_key:
         raise ValueError("Secret key cannot be empty for signature generation")
-    
+
     payload_json = json.dumps(payload, sort_keys=True)
     signature = hmac.new(
         secret_key.encode('utf-8'),

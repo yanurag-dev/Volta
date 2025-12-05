@@ -48,10 +48,9 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         # Strip whitespace from SKU
-        is_new = self.pk is None
         if self.sku:
             self.sku = self.sku.strip()
-        
+
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

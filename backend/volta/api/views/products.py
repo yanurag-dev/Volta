@@ -78,5 +78,5 @@ def bulk_delete_products(request):
             'message': f'Successfully deleted {deleted_count} products.',
             'deleted_count': deleted_count
         }, status=status.HTTP_200_OK)
-    except Exception as e:
+    except Exception:
         raise
