@@ -2,14 +2,12 @@
 Upload API views for CSV file processing.
 """
 
-import uuid
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from django.core.cache import cache
 from django.http import StreamingHttpResponse
-from django_eventstream import send_event
 import json
 import time
 
