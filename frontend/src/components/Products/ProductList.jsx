@@ -1,19 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchProducts, deleteProduct } from '../../services/products';
 import { Pagination } from '../common/Pagination';
 
 export function ProductList({ filters }) {
-  const [currentPage, setCurrentPage] = useState(1);
+  // Create stable filter key for tracking changes
+  const filterKey = useMemo(() => JSON.stringify(filters), [filters]);
+
+  // Use filterKey as part of state key to auto-reset page when filters change
+  const [pageState, setPageState] = useState({ filterKey, page: 1 });
+
+  // If filters changed, reset to page 1
+  const currentPage = pageState.filterKey === filterKey ? pageState.page : 1;
+
+  // Update page state
+  const setCurrentPage = (page) => {
+    setPageState({ filterKey, page });
+  };
+
   const pageSize = 20;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [JSON.stringify(filters)]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['products', { ...filters, page: currentPage, page_size: pageSize }],
