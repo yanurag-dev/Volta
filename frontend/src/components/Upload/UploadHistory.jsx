@@ -80,7 +80,7 @@ export function UploadHistory() {
                     {upload.filename}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {upload.processed_rows.toLocaleString()} / {upload.total_rows.toLocaleString()} products
+                    {(upload.processed_rows || 0).toLocaleString()} / {(upload.total_rows || 0).toLocaleString()} products
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(upload.created_at).toLocaleString()}

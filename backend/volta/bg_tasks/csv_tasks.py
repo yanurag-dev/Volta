@@ -85,6 +85,7 @@ def process_csv_upload_task(self, task_id, file_path):
 
         # Process CSV in chunks
         CHUNK_SIZE = 5000
+        PROGRESS_UPDATE_FREQUENCY = 50  # Update progress every 100 products
         processed = 0
         successful = 0
         failed = 0
@@ -139,6 +140,18 @@ def process_csv_upload_task(self, task_id, file_path):
 
                     # Process chunk when full
                     if len(chunk) >= CHUNK_SIZE:
+                        success_count = _process_chunk(chunk)
+                        successful += success_count
+                        failed += len(chunk) - success_count
+                        processed += len(chunk)
+
+                        # Update progress
+                        _update_progress(task_id, processed, total_rows, upload_task)
+
+                        chunk = []
+                    # Update progress every PROGRESS_UPDATE_FREQUENCY products
+                    elif len(chunk) % PROGRESS_UPDATE_FREQUENCY == 0:
+                        # Process mini-batch for progress update
                         success_count = _process_chunk(chunk)
                         successful += success_count
                         failed += len(chunk) - success_count

@@ -5,6 +5,9 @@ export const uploadCSV = async (file, onProgress) => {
   formData.append('file', file);
 
   const response = await api.post('/upload/', formData, {
+    headers: {
+      'Content-Type': undefined, // Let axios set the correct multipart/form-data header with boundary
+    },
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
         const percentCompleted = Math.round(

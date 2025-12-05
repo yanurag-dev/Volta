@@ -9,17 +9,22 @@ export function useUploadProgress(taskId) {
       return;
     }
 
+    console.log('[useUploadProgress] Starting SSE connection for task:', taskId);
+
     const unsubscribe = subscribeToUploadProgress(
       taskId,
       (progressData) => {
+        console.log('[useUploadProgress] Progress update:', progressData);
         setState({ taskId, progress: progressData, error: null });
       },
       (errorData) => {
+        console.error('[useUploadProgress] SSE error:', errorData);
         setState((prev) => ({ ...prev, taskId, error: errorData }));
       }
     );
 
     return () => {
+      console.log('[useUploadProgress] Cleaning up SSE connection for task:', taskId);
       unsubscribe();
     };
   }, [taskId]);
