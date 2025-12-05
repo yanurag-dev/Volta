@@ -36,7 +36,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     libpq5 \
-    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder
