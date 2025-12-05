@@ -33,7 +33,19 @@ fi
 
 # Only run migrations and collectstatic for web service
 # Celery workers should skip these
-if [ "$1" = "gunicorn" ]; then
+# Check if this is NOT a celery command (web server commands should run migrations)
+# This handles: "python manage.py runserver", "gunicorn", but not "celery worker" or "celery beat"
+is_celery_command=false
+
+for arg in "$@"; do
+    if [ "$arg" = "celery" ]; then
+        is_celery_command=true
+        break
+    fi
+done
+
+if [ "$is_celery_command" = false ]; then
+    # Run migrations for non-celery commands
     echo "Running migrations..."
     python manage.py makemigrations --noinput
     python manage.py migrate --noinput
