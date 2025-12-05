@@ -152,16 +152,18 @@ class WebhookAPITest(TestCase):
         }
 
     def test_create_webhook(self):
-        """Test creating a webhook."""
+        """Test creating a webhook (secret_key only returned on creation)."""
         url = reverse('webhook-list')
         response = self.client.post(url, self.webhook_data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Webhook.objects.count(), 1)
+        # Secret key should be included in create response
         self.assertIsNotNone(response.data['secret_key'])
+        self.assertGreater(len(response.data['secret_key']), 20)
 
     def test_list_webhooks(self):
-        """Test listing webhooks."""
+        """Test listing webhooks (secret_key should be hidden)."""
         Webhook.objects.create(**self.webhook_data)
 
         url = reverse('webhook-list')
@@ -169,6 +171,18 @@ class WebhookAPITest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 1)
+        # Secret key should NOT be in list response
+        self.assertNotIn('secret_key', response.data['results'][0])
+
+    def test_retrieve_webhook_hides_secret(self):
+        """Test retrieving webhook detail (secret_key should be hidden)."""
+        webhook = Webhook.objects.create(**self.webhook_data)
+        url = reverse('webhook-detail', args=[webhook.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Secret key should NOT be in retrieve response
+        self.assertNotIn('secret_key', response.data)
 
     def test_update_webhook(self):
         """Test updating a webhook."""

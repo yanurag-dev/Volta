@@ -9,7 +9,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
 from volta.db.models import Webhook
-from volta.api.serializers.webhook import WebhookSerializer, WebhookListSerializer
+from volta.api.serializers.webhook import (
+    WebhookSerializer,
+    WebhookCreateSerializer,
+    WebhookListSerializer
+)
 from volta.bg_tasks.webhook_tasks import send_webhook_task
 
 
@@ -19,8 +23,8 @@ class WebhookViewSet(viewsets.ModelViewSet):
 
     Supports:
     - List webhooks with filtering
-    - Create new webhook
-    - Retrieve webhook details
+    - Create new webhook (returns secret_key only on creation)
+    - Retrieve webhook details (secret_key hidden)
     - Update webhook
     - Delete webhook
     """
@@ -31,9 +35,11 @@ class WebhookViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_serializer_class(self):
-        """Use lightweight serializer for list action."""
+        """Return appropriate serializer based on action."""
         if self.action == 'list':
             return WebhookListSerializer
+        elif self.action == 'create':
+            return WebhookCreateSerializer
         return WebhookSerializer
 
 
