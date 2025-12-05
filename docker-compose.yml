@@ -114,6 +114,17 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=amqp://volta:volta_password@rabbitmq:5672//
 
+  # React Frontend
+  frontend:
+    build: ./frontend
+    container_name: volta_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - web
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+
 volumes:
   postgres_data:
   media_files:
