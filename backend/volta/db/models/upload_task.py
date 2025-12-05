@@ -57,3 +57,17 @@ class UploadTask(models.Model):
         if self.total_rows == 0:
             return 0
         return round((self.processed_rows / self.total_rows) * 100, 2)
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        status_changed = False
+        
+        if not is_new:
+            old_instance = UploadTask.objects.get(pk=self.pk)
+            if old_instance.status != self.status:
+                status_changed = True
+        
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)

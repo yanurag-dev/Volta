@@ -2,12 +2,15 @@
 Upload API views for CSV file processing.
 """
 
+import os
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from django.core.cache import cache
 from django.http import StreamingHttpResponse
+from django.conf import settings
+from django.db import transaction
 import json
 import time
 
@@ -40,13 +43,6 @@ def upload_csv(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    import os
-    import logging
-    from django.conf import settings
-    from django.db import transaction
-
-    logger = logging.getLogger(__name__)
-
     upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
     os.makedirs(upload_dir, exist_ok=True)
 
@@ -74,7 +70,6 @@ def upload_csv(request):
                     for chunk in uploaded_file.chunks():
                         destination.write(chunk)
             except IOError as e:
-                logger.error(f"Failed to write uploaded file: {e}")
                 # Clean up partial file if it exists
                 if file_path and os.path.exists(file_path):
                     os.remove(file_path)
@@ -96,14 +91,12 @@ def upload_csv(request):
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
-        logger.error(f"Upload failed: {e}")
-
         # Clean up: remove file if it exists
         if file_path and os.path.exists(file_path):
             try:
                 os.remove(file_path)
-            except OSError as os_err:
-                logger.error(f"Failed to clean up file {file_path}: {os_err}")
+            except OSError:
+                pass
 
         # Transaction rollback will handle DB cleanup
         return Response({
@@ -120,22 +113,24 @@ def upload_status(request, task_id):
     """
     try:
         upload_task = UploadTask.objects.get(task_id=task_id)
+        serializer = UploadTaskSerializer(upload_task)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     except UploadTask.DoesNotExist:
         return Response(
             {'error': 'Upload task not found.'},
             status=status.HTTP_404_NOT_FOUND
         )
+    except Exception as e:
+        raise
 
-    serializer = UploadTaskSerializer(upload_task)
-    return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-@api_view(['GET'])
 def upload_progress_stream(request, task_id):
     """
     SSE endpoint for real-time upload progress updates.
 
     Streams progress updates to the client using Server-Sent Events.
+    Note: This view doesn't use @api_view decorator to avoid DRF's content negotiation
+    which would reject text/event-stream Accept headers with 406 Not Acceptable.
     """
     def event_stream():
         """Generator function for SSE."""
@@ -183,7 +178,8 @@ def upload_progress_stream(request, task_id):
             'message': 'Upload complete' if upload_task.status == 'completed' else 'Upload failed',
             'total_rows': upload_task.total_rows,
             'successful_rows': upload_task.successful_rows,
-            'failed_rows': upload_task.failed_rows
+            'failed_rows': upload_task.failed_rows,
+            'error_message': upload_task.error_message if upload_task.status == 'failed' else None
         }
         yield f"data: {json.dumps(final_data)}\n\n"
 
@@ -203,10 +199,15 @@ def upload_history(request):
 
     Returns paginated list of upload tasks ordered by creation date.
     """
-    tasks = UploadTask.objects.all().order_by('-created_at')[:50]
-    serializer = UploadTaskListSerializer(tasks, many=True)
+    try:
+        tasks = UploadTask.objects.all().order_by('-created_at')[:50]
+        serializer = UploadTaskListSerializer(tasks, many=True)
+        
+        count = tasks.count()
 
-    return Response({
-        'count': tasks.count(),
-        'results': serializer.data
-    }, status=status.HTTP_200_OK)
+        return Response({
+            'count': count,
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        raise

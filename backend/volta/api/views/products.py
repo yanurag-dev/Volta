@@ -36,6 +36,30 @@ class ProductViewSet(viewsets.ModelViewSet):
             return ProductListSerializer
         return ProductSerializer
 
+    def list(self, request, *args, **kwargs):
+        """List products with filtering and pagination."""
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a single product."""
+        return super().retrieve(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        """Create a new product."""
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """Update a product."""
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Partially update a product."""
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a product."""
+        return super().destroy(request, *args, **kwargs)
+
 
 @api_view(['DELETE'])
 def bulk_delete_products(request):
@@ -45,11 +69,14 @@ def bulk_delete_products(request):
     This endpoint deletes ALL products in the database.
     Should be protected with confirmation in the frontend.
     """
-    # delete() returns a tuple: (total_deleted, {model: count})
-    deleted_info = Product.objects.all().delete()
-    deleted_count = deleted_info[0]
+    try:
+        # delete() returns a tuple: (total_deleted, {model: count})
+        deleted_info = Product.objects.all().delete()
+        deleted_count = deleted_info[0]
 
-    return Response({
-        'message': f'Successfully deleted {deleted_count} products.',
-        'deleted_count': deleted_count
-    }, status=status.HTTP_200_OK)
+        return Response({
+            'message': f'Successfully deleted {deleted_count} products.',
+            'deleted_count': deleted_count
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        raise
