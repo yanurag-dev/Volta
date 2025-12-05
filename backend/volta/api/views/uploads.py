@@ -69,7 +69,7 @@ def upload_csv(request):
                 with open(file_path, 'wb+') as destination:
                     for chunk in uploaded_file.chunks():
                         destination.write(chunk)
-            except IOError as e:
+            except IOError:
                 # Clean up partial file if it exists
                 if file_path and os.path.exists(file_path):
                     os.remove(file_path)

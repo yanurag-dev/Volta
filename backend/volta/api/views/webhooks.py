@@ -42,6 +42,30 @@ class WebhookViewSet(viewsets.ModelViewSet):
             return WebhookCreateSerializer
         return WebhookSerializer
 
+    def list(self, request, *args, **kwargs):
+        """List webhooks with filtering."""
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a single webhook."""
+        return super().retrieve(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        """Create a new webhook."""
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """Update a webhook."""
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Partially update a webhook."""
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a webhook."""
+        return super().destroy(request, *args, **kwargs)
+
 
 @api_view(['POST'])
 def test_webhook(request, pk):
