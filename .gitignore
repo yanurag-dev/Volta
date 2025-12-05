@@ -30,6 +30,7 @@ staticfiles/
 
 # Environment
 .env
+backend/.env
 .venv
 env/
 venv/
