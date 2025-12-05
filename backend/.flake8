@@ -4,12 +4,13 @@ exclude =
     .git,
     __pycache__,
     */migrations/*,
-    venv,
-    venv_test,
+    *venv*,
     env,
     staticfiles,
-    media
+    media,
+    .eggs,
+    *.egg
 ignore = E203,E501,W503
 per-file-ignores =
-    __init__.py:F401
-    */settings/*.py:F401,F403,F405
+    __init__.py:F401,
+    volta/settings/*.py:F401,F403,F405
