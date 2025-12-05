@@ -4,6 +4,7 @@ import { uploadCSV } from '../services/upload';
 import { FileUploader } from '../components/Upload/FileUploader';
 import { ProgressBar } from '../components/Upload/ProgressBar';
 import { UploadHistory } from '../components/Upload/UploadHistory';
+import { CSVTemplateDownload } from '../components/Upload/CSVTemplateDownload';
 import { useUploadProgress } from '../hooks/useUploadProgress';
 
 export function UploadPage() {
@@ -16,7 +17,8 @@ export function UploadPage() {
       setTaskId(null);
     },
     onSuccess: (data) => {
-      setTaskId(data.task_id);
+      // Backend returns { message, task: { task_id, ... } }
+      setTaskId(data.task?.task_id);
     },
   });
 
@@ -34,6 +36,8 @@ export function UploadPage() {
       </div>
 
       <div className="space-y-8">
+        <CSVTemplateDownload />
+
         <div className="card">
           <FileUploader
             onUpload={handleUpload}
