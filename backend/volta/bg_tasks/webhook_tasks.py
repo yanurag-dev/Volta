@@ -76,7 +76,7 @@ def send_webhook_task(self, webhook_id, event, payload):
             retry_delay = 2 ** self.request.retries  # 2, 4, 8 seconds
             raise self.retry(exc=e, countdown=retry_delay)
 
-        except Exception as e:
+        except Exception:
             # Other errors - increment failure
             webhook.increment_failure()
             continue
