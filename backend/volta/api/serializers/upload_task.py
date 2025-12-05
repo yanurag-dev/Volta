@@ -32,6 +32,7 @@ class UploadTaskSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'task_id',
+            'filename',
             'total_rows',
             'processed_rows',
             'successful_rows',
