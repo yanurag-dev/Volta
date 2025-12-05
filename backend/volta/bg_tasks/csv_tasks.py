@@ -4,7 +4,6 @@ Celery tasks for CSV processing.
 
 import csv
 import os
-from datetime import datetime
 from celery import shared_task
 from django.core.cache import cache
 from django.db import transaction
@@ -188,7 +187,7 @@ def _process_chunk(chunk):
                     }
                 )
 
-            except Exception as e:
+            except Exception:
                 # Continue processing other products
                 continue
 
