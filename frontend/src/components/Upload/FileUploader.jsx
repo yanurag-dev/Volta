@@ -84,7 +84,7 @@ export function FileUploader({ onUpload, isUploading }) {
         />
 
         {!selectedFile ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex justify-center">
               <svg
                 className="w-16 h-16 text-gray-400"
@@ -101,17 +101,34 @@ export function FileUploader({ onUpload, isUploading }) {
               </svg>
             </div>
 
+            <div className="space-y-2">
+              <p className="text-lg text-gray-700">Drag and drop your CSV file here</p>
+              <p className="text-sm text-gray-500">or</p>
+            </div>
+
             <div>
               <label
                 htmlFor="file-upload"
-                className="cursor-pointer text-primary-600 hover:text-primary-700 font-medium"
+                className="btn btn-primary cursor-pointer inline-flex items-center gap-2"
               >
-                Choose a file
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                  />
+                </svg>
+                Browse Files
               </label>
-              <span className="text-gray-600"> or drag and drop</span>
             </div>
 
-            <p className="text-sm text-gray-500">CSV files up to 100MB</p>
+            <p className="text-sm text-gray-500">Supported: CSV files up to 100MB</p>
           </div>
         ) : (
           <div className="space-y-4">
