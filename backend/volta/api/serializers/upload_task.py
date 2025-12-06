@@ -57,8 +57,13 @@ class UploadTaskListSerializer(serializers.ModelSerializer):
             'id',
             'task_id',
             'filename',
+            'total_rows',
+            'processed_rows',
+            'successful_rows',
+            'failed_rows',
             'status',
             'progress_percentage',
+            'error_message',
             'created_at'
         ]
         read_only_fields = fields
