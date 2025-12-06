@@ -80,7 +80,19 @@ export function UploadHistory() {
                     {upload.filename}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {(upload.processed_rows || 0).toLocaleString()} / {(upload.total_rows || 0).toLocaleString()} products
+                    {upload.status === 'completed' ? (
+                      <>
+                        <span className="text-green-600">{(upload.successful_rows || 0).toLocaleString()} succeeded</span>
+                        {upload.failed_rows > 0 && (
+                          <span className="text-red-600"> • {upload.failed_rows.toLocaleString()} failed</span>
+                        )}
+                        {' '}of {(upload.total_rows || 0).toLocaleString()} products
+                      </>
+                    ) : (
+                      <>
+                        {(upload.processed_rows || 0).toLocaleString()} / {(upload.total_rows || 0).toLocaleString()} products
+                      </>
+                    )}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(upload.created_at).toLocaleString()}
