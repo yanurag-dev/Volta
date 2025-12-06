@@ -15,6 +15,10 @@ A highly scalable web application for importing 500,000+ products from CSV files
 
 ---
 
+## Architecure
+
+<img width="2601" height="2263" alt="Untitled diagram-2025-12-06-132731" src="https://github.com/user-attachments/assets/55e98178-8573-4f69-9485-28ee2d0b46c6" />
+
 ## 🛠 Tech Stack
 
 ### Backend
