@@ -71,7 +71,7 @@ WSGI_APPLICATION = 'volta.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL'),
+        default=config('DATABASE_URL', default='postgresql://volta_user:volta_password@db:5432/volta'),
         conn_max_age=600
     )
 }
