@@ -71,11 +71,11 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=amqp://volta:volta_password@rabbitmq:5672//
 
-  # Celery Worker
+  # Celery Worker - Optimized for large CSV processing
   celery_worker:
     build: ./backend
     container_name: volta_celery_worker
-    command: celery -A volta worker --loglevel=info --concurrency=4
+    command: sh -c "celery -A volta worker --loglevel=info --concurrency=$${CELERY_WORKER_CONCURRENCY:-8} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
     volumes:
       - ./backend:/app
       - media_files:/app/media
@@ -92,6 +92,8 @@ services:
       - DATABASE_URL=postgresql://volta_user:volta_password@db:5432/volta
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=amqp://volta:volta_password@rabbitmq:5672//
+      - CELERY_WORKER_CONCURRENCY=${CELERY_WORKER_CONCURRENCY:-8}
+      - CELERY_WORKER_PREFETCH_MULTIPLIER=${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}
 
   # Celery Beat (Optional - for scheduled tasks)
   celery_beat:
@@ -114,16 +116,21 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=amqp://volta:volta_password@rabbitmq:5672//
 
-  # React Frontend
+  # React Frontend (Development mode with hot-reload)
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     container_name: volta_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "3000:80"
+      - "3000:5173"
     depends_on:
       - web
     environment:
-      - VITE_API_URL=http://localhost:8000/api
+      - VITE_API_URL=/api
 
 volumes:
   postgres_data:
