@@ -5,6 +5,11 @@
 
 set -e  # Exit on error
 
+# Change to project root directory (parent of deploy/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -191,10 +196,10 @@ fi
 print_success "Sufficient disk space available!"
 echo ""
 
-# Stop any existing containers
+# Stop any existing containers and clean up volumes
 print_info "Stopping any existing containers..."
-docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
-print_success "Existing containers stopped!"
+docker-compose -f docker-compose.prod.yml down -v 2>/dev/null || true
+print_success "Existing containers stopped and volumes cleaned!"
 echo ""
 
 # Pull Docker images
