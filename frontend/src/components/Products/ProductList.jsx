@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchProducts, deleteProduct } from '../../services/products';
 import { Pagination } from '../common/Pagination';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../hooks/useToast';
 
 export function ProductList({ filters, onEdit }) {
   // Create stable filter key for tracking changes
@@ -30,7 +30,7 @@ export function ProductList({ filters, onEdit }) {
 
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
-    onSuccess: (_, productId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       showSuccess('Product deleted successfully');
     },
