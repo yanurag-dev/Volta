@@ -43,6 +43,13 @@ def upload_csv(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    # Validate file is not empty
+    if uploaded_file.size == 0:
+        return Response(
+            {'error': 'CSV file is empty. Please upload a file with data.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
     os.makedirs(upload_dir, exist_ok=True)
 
