@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { bulkDeleteProducts } from '../../services/products';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../hooks/useToast';
 
 export function BulkDeleteButton() {
   const [showConfirm, setShowConfirm] = useState(false);

@@ -1,4 +1,4 @@
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../hooks/useToast';
 
 function Toast({ id, message, type, onClose }) {
   const styles = {
