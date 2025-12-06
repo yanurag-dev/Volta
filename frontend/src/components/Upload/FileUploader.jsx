@@ -33,14 +33,23 @@ export function FileUploader({ onUpload, isUploading }) {
     }
   };
 
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
   const handleFileSelect = (file) => {
     if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
       alert('Please select a CSV file');
       return;
     }
 
-    if (file.size > 100 * 1024 * 1024) {
-      alert('File size must be less than 100MB');
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (file.size > maxSize) {
+      alert(`File size (${formatFileSize(file.size)}) exceeds the maximum limit of 100MB. Please reduce the file size or split it into smaller files.`);
       return;
     }
 
@@ -151,8 +160,18 @@ export function FileUploader({ onUpload, isUploading }) {
             <div>
               <p className="font-medium text-gray-900">{selectedFile.name}</p>
               <p className="text-sm text-gray-500">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                {formatFileSize(selectedFile.size)}
               </p>
+              {selectedFile.size > 50 * 1024 * 1024 && (
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
+                  <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xs text-amber-800 font-medium">
+                    Large file - Upload may take 2-5 minutes
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 justify-center">

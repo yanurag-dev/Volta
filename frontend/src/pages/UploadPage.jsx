@@ -11,6 +11,7 @@ import { useToast } from '../hooks/useToast';
 export function UploadPage() {
   const [taskId, setTaskId] = useState(null);
   const [lastUploadedFile, setLastUploadedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null); // HTTP upload progress
   const { progress } = useUploadProgress(taskId);
   const { showSuccess, showError, showWarning } = useToast();
   const hasShownCompletionToast = useRef(false);
@@ -49,16 +50,25 @@ export function UploadPage() {
   }, [progress, showSuccess, showError, showWarning]);
 
   const uploadMutation = useMutation({
-    mutationFn: uploadCSV,
+    mutationFn: (file) => uploadCSV(file, (percentCompleted) => {
+      // Track HTTP upload progress
+      setUploadProgress(percentCompleted);
+    }),
     onMutate: () => {
       setTaskId(null);
+      setUploadProgress(0);
     },
     onSuccess: (data) => {
       // Backend returns { message, task: { task_id, ... } }
+      setUploadProgress(100); // Upload complete
       setTaskId(data.task?.task_id);
       showSuccess('File uploaded successfully. Processing started.');
+      
+      // Clear upload progress after a short delay
+      setTimeout(() => setUploadProgress(null), 1000);
     },
     onError: (error) => {
+      setUploadProgress(null);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to upload file';
       showError(errorMessage);
     },
@@ -94,6 +104,50 @@ export function UploadPage() {
             isUploading={uploadMutation.isPending}
           />
 
+          {/* HTTP Upload Progress (File Transfer Phase) */}
+          {uploadProgress !== null && uploadProgress < 100 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Uploading File</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Transferring {lastUploadedFile?.name} to server...
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-semibold text-blue-600">{uploadProgress}%</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {uploadProgress < 30 ? 'Starting...' : uploadProgress < 90 ? 'Uploading...' : 'Almost done...'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                  <div
+                    className="h-3 rounded-full transition-all duration-300 ease-out bg-blue-600 relative overflow-hidden"
+                    style={{ width: `${uploadProgress}%` }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer" />
+                    <div className="absolute inset-0 bg-white opacity-10 animate-pulse" />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="animate-spin h-4 w-4 text-blue-600" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span className="text-gray-600">
+                    {lastUploadedFile && lastUploadedFile.size > 50 * 1024 * 1024 
+                      ? '⏱️ Large file - this may take a few minutes...'
+                      : '📤 Sending file to server...'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {uploadMutation.isError && (
             <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-start">
@@ -119,6 +173,7 @@ export function UploadPage() {
             </div>
           )}
 
+          {/* Processing Progress (DB Creation Phase) */}
           {progress && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <ProgressBar progress={progress} />
