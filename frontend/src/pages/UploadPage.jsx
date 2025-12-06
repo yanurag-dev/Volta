@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { uploadCSV } from '../services/upload';
 import { FileUploader } from '../components/Upload/FileUploader';
@@ -6,11 +6,47 @@ import { ProgressBar } from '../components/Upload/ProgressBar';
 import { UploadHistory } from '../components/Upload/UploadHistory';
 import { CSVTemplateDownload } from '../components/Upload/CSVTemplateDownload';
 import { useUploadProgress } from '../hooks/useUploadProgress';
+import { useToast } from '../hooks/useToast';
 
 export function UploadPage() {
   const [taskId, setTaskId] = useState(null);
   const [lastUploadedFile, setLastUploadedFile] = useState(null);
   const { progress } = useUploadProgress(taskId);
+  const { showSuccess, showError, showWarning } = useToast();
+  const hasShownCompletionToast = useRef(false);
+
+  // Show toast notifications when upload completes or fails
+  useEffect(() => {
+    if (!progress) {
+      hasShownCompletionToast.current = false;
+      return;
+    }
+
+    // Check if upload completed
+    if (progress.status === 'completed' && !hasShownCompletionToast.current) {
+      hasShownCompletionToast.current = true;
+
+      // Check if there's a warning (e.g., empty CSV)
+      if (progress.error_message || progress.message?.includes('no data')) {
+        showWarning(progress.error_message || progress.message || 'Upload completed with warnings');
+      } else if (progress.failed_rows > 0) {
+        showWarning(
+          `Upload completed: ${progress.successful_rows} succeeded, ${progress.failed_rows} failed`
+        );
+      } else {
+        showSuccess(
+          `Upload completed successfully! ${progress.successful_rows || progress.total_rows || 0} products imported.`
+        );
+      }
+    }
+
+    // Check if upload failed
+    if (progress.status === 'failed' && !hasShownCompletionToast.current) {
+      hasShownCompletionToast.current = true;
+      const errorMsg = progress.error_message || progress.message || 'Upload failed';
+      showError(errorMsg);
+    }
+  }, [progress, showSuccess, showError, showWarning]);
 
   const uploadMutation = useMutation({
     mutationFn: uploadCSV,
@@ -20,6 +56,11 @@ export function UploadPage() {
     onSuccess: (data) => {
       // Backend returns { message, task: { task_id, ... } }
       setTaskId(data.task?.task_id);
+      showSuccess('File uploaded successfully. Processing started.');
+    },
+    onError: (error) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to upload file';
+      showError(errorMessage);
     },
   });
 

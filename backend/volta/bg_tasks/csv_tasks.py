@@ -38,7 +38,7 @@ def process_csv_upload_task(self, task_id, file_path):
 
         # Validate file is not empty
         if total_rows < 0:
-            error_msg = "CSV file is empty or contains no data rows"
+            error_msg = "CSV file is empty or missing header row"
             raise ValueError(error_msg)
 
         upload_task.total_rows = total_rows
@@ -46,12 +46,12 @@ def process_csv_upload_task(self, task_id, file_path):
 
         # Handle empty CSV (only header, no data rows)
         if total_rows == 0:
-            upload_task.status = 'completed'
+            upload_task.status = 'failed'
             upload_task.processed_rows = 0
             upload_task.successful_rows = 0
             upload_task.failed_rows = 0
             upload_task.completed_at = timezone.now()
-            upload_task.error_message = "CSV file contains headers but no data rows"
+            upload_task.error_message = "CSV file contains no data rows to import"
             upload_task.save()
 
             # Clean up file
@@ -64,23 +64,17 @@ def process_csv_upload_task(self, task_id, file_path):
             # Trigger webhook
             send_webhook_task.delay(
                 webhook_id=None,
-                event='upload.completed',
+                event='upload.failed',
                 payload={
                     'task_id': str(task_id),
                     'filename': upload_task.filename,
-                    'total_rows': 0,
-                    'successful_rows': 0,
-                    'failed_rows': 0,
-                    'warning': 'No data rows to process'
+                    'error': 'CSV file contains no data rows to import'
                 }
             )
 
             return {
-                'status': 'completed',
-                'processed': 0,
-                'successful': 0,
-                'failed': 0,
-                'warning': 'CSV file contains no data rows'
+                'status': 'failed',
+                'error': 'CSV file contains no data rows to import'
             }
 
         # Process CSV in chunks
