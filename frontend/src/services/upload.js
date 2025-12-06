@@ -8,8 +8,9 @@ export const uploadCSV = async (file, onProgress) => {
     headers: {
       'Content-Type': undefined, // Let axios set the correct multipart/form-data header with boundary
     },
+    timeout: 300000, // 5 minutes timeout for large file uploads
     onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
+      if (typeof onProgress === 'function' && progressEvent.total) {
         const percentCompleted = Math.round(
           (progressEvent.loaded * 100) / progressEvent.total
         );

@@ -72,3 +72,4 @@ PROD-003,Sample Product 3,Third example product`;
     </div>
   );
 }
+
