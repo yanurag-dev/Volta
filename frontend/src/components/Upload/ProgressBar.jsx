@@ -2,6 +2,9 @@ export function ProgressBar({ progress }) {
   if (!progress) return null;
 
   const { current = 0, total = 0, percentage = 0, status = 'pending', errors = [] } = progress;
+  
+  // Ensure errors is always an array
+  const errorsList = Array.isArray(errors) ? errors : [];
 
   const getStatusColor = () => {
     switch (status) {
@@ -124,10 +127,10 @@ export function ProgressBar({ progress }) {
             </svg>
             <div className="ml-3">
               <p className="text-sm font-medium text-red-800">Upload failed</p>
-              {errors.length > 0 && (
+              {errorsList.length > 0 && (
                 <div className="mt-2 text-sm text-red-700">
                   <ul className="list-disc pl-5 space-y-1">
-                    {errors.map((error, index) => (
+                    {errorsList.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
                   </ul>

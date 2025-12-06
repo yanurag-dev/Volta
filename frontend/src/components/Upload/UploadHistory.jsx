@@ -26,7 +26,10 @@ export function UploadHistory() {
     );
   }
 
-  if (!history || history.length === 0) {
+  // Ensure history is always an array
+  const historyList = Array.isArray(history) ? history : [];
+
+  if (!historyList || historyList.length === 0) {
     return (
       <div className="text-center py-12">
         <svg
@@ -64,7 +67,7 @@ export function UploadHistory() {
 
   return (
     <div className="space-y-3">
-      {history.map((upload) => (
+      {historyList.map((upload) => (
         <div
           key={upload.task_id}
           className="card hover:shadow-md transition-shadow"

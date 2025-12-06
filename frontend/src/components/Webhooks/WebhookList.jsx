@@ -124,7 +124,10 @@ export function WebhookList({ onEdit }) {
     );
   }
 
-  if (!webhooks || webhooks.length === 0) {
+  // Ensure webhooks is always an array
+  const webhooksList = Array.isArray(webhooks) ? webhooks : [];
+
+  if (!webhooksList || webhooksList.length === 0) {
     return (
       <div className="text-center py-12 card">
         <svg
@@ -148,7 +151,7 @@ export function WebhookList({ onEdit }) {
 
   return (
     <div className="space-y-4">
-      {webhooks.map((webhook) => {
+      {webhooksList.map((webhook) => {
         const testState = testStates[webhook.id];
 
         return (
