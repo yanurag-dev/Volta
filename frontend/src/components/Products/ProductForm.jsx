@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct } from '../../services/products';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../hooks/useToast';
 
 export function ProductForm({ product, onSuccess, onCancel }) {
   const isEditing = !!product;
