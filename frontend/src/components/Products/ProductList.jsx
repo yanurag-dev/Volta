@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchProducts, deleteProduct } from '../../services/products';
 import { Pagination } from '../common/Pagination';
 
-export function ProductList({ filters }) {
+export function ProductList({ filters, onEdit }) {
   // Create stable filter key for tracking changes
   const filterKey = useMemo(() => JSON.stringify(filters), [filters]);
 
@@ -21,7 +20,6 @@ export function ProductList({ filters }) {
 
   const pageSize = 20;
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['products', { ...filters, page: currentPage, page_size: pageSize }],
@@ -35,8 +33,10 @@ export function ProductList({ filters }) {
     },
   });
 
-  const handleEdit = (id) => {
-    navigate(`/products/${id}/edit`);
+  const handleEdit = (product) => {
+    if (onEdit) {
+      onEdit(product);
+    }
   };
 
   const handleDelete = (id, name) => {
@@ -143,7 +143,7 @@ export function ProductList({ filters }) {
               <div className="flex items-center gap-2 ml-4">
                 <button
                   type="button"
-                  onClick={() => handleEdit(product.id)}
+                  onClick={() => handleEdit(product)}
                   className="p-2 text-gray-400 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors"
                   title="Edit product"
                 >
