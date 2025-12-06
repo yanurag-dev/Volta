@@ -222,13 +222,13 @@ echo ""
 
 # Wait for services to be healthy
 print_info "Waiting for services to be healthy..."
-TIMEOUT=120
+TIMEOUT=180
 ELAPSED=0
 INTERVAL=5
 
 while [ $ELAPSED -lt $TIMEOUT ]; do
     HEALTHY=$(docker-compose -f docker-compose.prod.yml ps | grep -c "healthy" || true)
-    if [ "$HEALTHY" -ge 3 ]; then
+    if [ "$HEALTHY" -ge 4 ]; then
         print_success "All services are healthy!"
         break
     fi
