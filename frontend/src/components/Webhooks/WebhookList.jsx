@@ -119,7 +119,7 @@ export function WebhookList() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-3">
-                {webhook.events.map((event) => (
+                {(webhook.events || []).map((event) => (
                   <span
                     key={event}
                     className="inline-flex items-center px-2 py-1 rounded text-xs bg-primary-100 text-primary-800"
@@ -130,8 +130,8 @@ export function WebhookList() {
               </div>
 
               <div className="flex items-center gap-4 text-xs text-gray-500">
-                <span>Retries: {webhook.retry_count}</span>
-                <span>Failures: {webhook.failure_count}</span>
+                <span>Retries: {webhook.retry_count || 0}</span>
+                <span>Failures: {webhook.failure_count || 0}</span>
                 {webhook.last_triggered_at && (
                   <span>Last triggered: {new Date(webhook.last_triggered_at).toLocaleString()}</span>
                 )}
