@@ -25,21 +25,21 @@ class UploadTask(models.Model):
         help_text="Celery task ID"
     )
     filename = models.CharField(max_length=255)
-    
+
     # Row counts
     total_rows = models.IntegerField(default=0, help_text="Total rows in CSV file")
     unique_products = models.IntegerField(default=0, help_text="Unique products after deduplication")
     duplicate_rows = models.IntegerField(default=0, help_text="Duplicate rows removed")
-    
+
     # Processing counts
     processed_rows = models.IntegerField(default=0, help_text="Products processed so far")
     successful_rows = models.IntegerField(default=0, help_text="Products successfully saved")
     failed_rows = models.IntegerField(default=0, help_text="Products that failed")
-    
+
     # Create/Update breakdown
     created_count = models.IntegerField(default=0, help_text="New products created")
     updated_count = models.IntegerField(default=0, help_text="Existing products updated")
-    
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
