@@ -68,10 +68,6 @@ services:
       - "8000"
     env_file:
       - ./backend/.env.production
-    environment:
-      - DATABASE_URL=postgresql://volta_user:${DB_PASSWORD:-volta_strong_password_change_me}@db:5432/volta
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=amqp://volta:${RABBITMQ_PASSWORD:-volta_rabbit_password_change_me}@rabbitmq:5672//
     depends_on:
       db:
         condition: service_healthy
@@ -94,10 +90,6 @@ services:
       - media_files:/app/media
     env_file:
       - ./backend/.env.production
-    environment:
-      - DATABASE_URL=postgresql://volta_user:${DB_PASSWORD:-volta_strong_password_change_me}@db:5432/volta
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=amqp://volta:${RABBITMQ_PASSWORD:-volta_rabbit_password_change_me}@rabbitmq:5672//
     depends_on:
       db:
         condition: service_healthy
