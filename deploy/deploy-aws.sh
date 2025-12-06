@@ -44,9 +44,9 @@ fi
 print_success "All prerequisites met!"
 echo ""
 
-# Generate SECRET_KEY
+# Generate SECRET_KEY (only alphanumeric to avoid shell parsing issues)
 print_info "Generating secure SECRET_KEY..."
-SECRET_KEY=$(python3 -c "import secrets; import string; chars = string.ascii_letters + string.digits + string.punctuation; print(''.join(secrets.choice(chars) for _ in range(64)))" | sed 's/[$]/\\$/g')
+SECRET_KEY=$(python3 -c "import secrets; import string; chars = string.ascii_letters + string.digits; print(''.join(secrets.choice(chars) for _ in range(64)))")
 print_success "SECRET_KEY generated!"
 echo ""
 
