@@ -2,6 +2,14 @@
 
 A highly scalable web application for importing 500,000+ products from CSV files into PostgreSQL, with real-time progress tracking and webhook notifications.
 
+## 🌐 Live Demo
+
+**Deployed on AWS EC2**: [http://3.82.100.106](http://3.82.100.106)
+
+- **Frontend**: [http://3.82.100.106](http://3.82.100.106)
+- **API**: [http://3.82.100.106/api](http://3.82.100.106/api)
+- **Django Admin**: [http://3.82.100.106/admin](http://3.82.100.106/admin)
+
 ---
 
 ## 📋 Features
@@ -15,9 +23,9 @@ A highly scalable web application for importing 500,000+ products from CSV files
 
 ---
 
-## Architecure
+## 🏗️ Architecture
 
-<img width="2601" height="2263" alt="Untitled diagram-2025-12-06-132731" src="https://github.com/user-attachments/assets/55e98178-8573-4f69-9485-28ee2d0b46c6" />
+<img width="2601" height="2263" alt="Volta Architecture Diagram" src="https://github.com/user-attachments/assets/55e98178-8573-4f69-9485-28ee2d0b46c6" />
 
 ## 🛠 Tech Stack
 
@@ -40,7 +48,8 @@ A highly scalable web application for importing 500,000+ products from CSV files
 ### DevOps
 
 - **Containerization**: Docker + Docker Compose
-- **Deployment**: Railway / Render.com compatible
+- **Deployment**: AWS EC2 with Docker Compose
+- **Reverse Proxy**: Nginx
 
 ---
 
@@ -236,13 +245,13 @@ PROD-002,Another Product,Description text,false
 
 ---
 
-## 🎯 Performance Targets
+## 🎯 Performance Benchmarks
 
-| Metric | Target |
-|--------|--------|
-| Upload 500k products | < 5 minutes (4 workers) |
+| Metric | Performance |
+|--------|-------------|
+| Upload 500k products | **< 2 minutes** (8 workers) ⚡ |
 | API response (list products) | < 100ms (with pagination) |
-| Progress update frequency | Every 1-2 seconds |
+| Progress update frequency | Real-time (1-2 seconds) |
 | Concurrent uploads | 5-10 simultaneous |
 | Database query time | < 50ms (with indexes) |
 | Webhook delivery | < 3 seconds (with retries) |
@@ -300,51 +309,6 @@ The system supports the following webhook events:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `MAX_UPLOAD_SIZE` | Max file size in bytes | `104857600` (100MB) |
-
----
-
-## 🚢 Deployment
-
-### Railway Deployment
-
-1. Install Railway CLI:
-
-   ```bash
-   npm install -g @railway/cli
-   ```
-
-2. Login and deploy:
-
-   ```bash
-   railway login
-   railway init
-   railway up
-   ```
-
-3. Add required services:
-   - PostgreSQL
-   - Redis
-   - RabbitMQ (via CloudAMQP)
-
-### Render Deployment
-
-1. Create a `render.yaml` file (see deployment docs)
-2. Connect your GitHub repository
-3. Add required services in Render dashboard
-
-### Environment Variables for Production
-
-Make sure to set these in your deployment platform:
-
-```env
-SECRET_KEY=<generate-strong-key>
-DEBUG=False
-ALLOWED_HOSTS=yourdomain.com
-CORS_ALLOWED_ORIGINS=https://yourdomain.com
-DATABASE_URL=<provided-by-platform>
-REDIS_URL=<provided-by-platform>
-CELERY_BROKER_URL=<provided-by-platform>
-```
 
 ---
 
@@ -446,12 +410,6 @@ docker-compose exec celery_worker celery -A volta purge
 3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
