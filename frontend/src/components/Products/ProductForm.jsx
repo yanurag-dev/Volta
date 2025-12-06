@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct } from '../../services/products';
+import { useToast } from '../../context/ToastContext';
 
 export function ProductForm({ product, onSuccess, onCancel }) {
   const isEditing = !!product;
   const queryClient = useQueryClient();
+  const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState({
     sku: product?.sku || '',
@@ -19,13 +21,25 @@ export function ProductForm({ product, onSuccess, onCancel }) {
     mutationFn: isEditing
       ? (data) => updateProduct(product.id, data)
       : createProduct,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      const message = isEditing
+        ? `Product "${data.name}" updated successfully`
+        : `Product "${data.name}" created successfully`;
+      showSuccess(message);
       if (onSuccess) onSuccess();
     },
     onError: (error) => {
       const apiErrors = error.response?.data || {};
       setErrors(apiErrors);
+
+      // Show toast for general errors
+      if (apiErrors.non_field_errors) {
+        showError(apiErrors.non_field_errors);
+      } else if (!Object.keys(apiErrors).length) {
+        const errorMessage = error.message || `Failed to ${isEditing ? 'update' : 'create'} product`;
+        showError(errorMessage);
+      }
     },
   });
 
