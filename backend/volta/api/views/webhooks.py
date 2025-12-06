@@ -14,7 +14,6 @@ from volta.api.serializers.webhook import (
     WebhookCreateSerializer,
     WebhookListSerializer
 )
-from volta.bg_tasks.webhook_tasks import send_webhook_task
 
 
 class WebhookViewSet(viewsets.ModelViewSet):
@@ -70,10 +69,15 @@ class WebhookViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 def test_webhook(request, pk):
     """
-    Test a webhook by sending a sample payload.
+    Test a webhook by sending a sample payload synchronously.
 
-    Triggers the webhook with a test event to verify configuration.
+    Triggers the webhook with a test event to verify configuration
+    and returns response details immediately.
     """
+    import requests
+    import time
+    from django.utils import timezone
+
     try:
         webhook = Webhook.objects.get(pk=pk)
     except Webhook.DoesNotExist:
@@ -85,6 +89,7 @@ def test_webhook(request, pk):
     # Sample test payload
     test_payload = {
         'event': 'webhook.test',
+        'timestamp': timezone.now().isoformat(),
         'data': {
             'message': 'This is a test webhook delivery',
             'webhook_id': webhook.id,
@@ -92,15 +97,63 @@ def test_webhook(request, pk):
         }
     }
 
-    # Send webhook asynchronously
-    task = send_webhook_task.delay(
-        webhook_id=webhook.id,
-        event='webhook.test',
-        payload=test_payload
-    )
+    # Prepare headers
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Webhook-Event': 'webhook.test',
+        'User-Agent': 'Volta-Webhook/1.0'
+    }
 
-    return Response({
-        'message': 'Test webhook triggered successfully.',
-        'task_id': str(task.id),
-        'webhook_url': webhook.url
-    }, status=status.HTTP_200_OK)
+    # Send test request synchronously and measure response time
+    start_time = time.time()
+    response_data = {
+        'webhook_url': webhook.url,
+        'status': 'failed',
+        'status_code': None,
+        'response_time_ms': None,
+        'error': None
+    }
+
+    try:
+        response = requests.post(
+            webhook.url,
+            json=test_payload,
+            headers=headers,
+            timeout=10
+        )
+
+        end_time = time.time()
+        response_time_ms = int((end_time - start_time) * 1000)
+
+        response_data['status_code'] = response.status_code
+        response_data['response_time_ms'] = response_time_ms
+
+        if response.status_code in [200, 201, 202, 204]:
+            response_data['status'] = 'success'
+            response_data['message'] = 'Webhook test successful'
+        else:
+            response_data['status'] = 'error'
+            response_data['message'] = f'Webhook returned status {response.status_code}'
+
+    except requests.exceptions.Timeout:
+        end_time = time.time()
+        response_data['response_time_ms'] = int((end_time - start_time) * 1000)
+        response_data['status'] = 'error'
+        response_data['error'] = 'Request timeout (>10s)'
+        response_data['message'] = 'Webhook request timed out'
+
+    except requests.exceptions.ConnectionError:
+        end_time = time.time()
+        response_data['response_time_ms'] = int((end_time - start_time) * 1000)
+        response_data['status'] = 'error'
+        response_data['error'] = 'Connection failed'
+        response_data['message'] = 'Could not connect to webhook URL'
+
+    except Exception as e:
+        end_time = time.time()
+        response_data['response_time_ms'] = int((end_time - start_time) * 1000)
+        response_data['status'] = 'error'
+        response_data['error'] = str(e)
+        response_data['message'] = 'Webhook test failed'
+
+    return Response(response_data, status=status.HTTP_200_OK)
