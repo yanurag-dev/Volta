@@ -41,14 +41,15 @@ RUN apt-get update && apt-get install -y \
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 
-# Copy entrypoint script and project files
+# Copy entrypoint scripts and project files
 COPY entrypoint.sh /app/entrypoint.sh
+COPY railway.entrypoint.sh /app/railway.entrypoint.sh
 COPY . /app/
 
 # Create media and static directories, set permissions, and make entrypoint executable
 # All in one RUN command to optimize layers
 RUN mkdir -p /app/media/uploads /app/staticfiles && \
-    chmod +x /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh /app/railway.entrypoint.sh && \
     useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 
@@ -57,6 +58,6 @@ USER appuser
 
 EXPOSE 8000
 
-# Use entrypoint for migrations and admin creation
-ENTRYPOINT ["sh", "/app/entrypoint.sh"]
-CMD ["gunicorn", "volta.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
+# Use Railway entrypoint for production, falls back to regular for local
+ENTRYPOINT ["sh", "/app/railway.entrypoint.sh"]
+CMD ["gunicorn", "volta.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120"]

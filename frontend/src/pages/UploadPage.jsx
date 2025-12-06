@@ -11,20 +11,54 @@ import { useToast } from '../hooks/useToast';
 export function UploadPage() {
   const [taskId, setTaskId] = useState(null);
   const [lastUploadedFile, setLastUploadedFile] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [completionTime, setCompletionTime] = useState(null);
   const { progress } = useUploadProgress(taskId);
   const { showSuccess, showError, showWarning } = useToast();
   const hasShownCompletionToast = useRef(false);
+  const timerIntervalRef = useRef(null);
+
+  // Timer logic - update elapsed time every second
+  useEffect(() => {
+    if (progress && progress.status === 'processing' && startTime) {
+      // Start timer
+      timerIntervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        setElapsedTime(elapsed);
+      }, 1000);
+    } else {
+      // Stop timer when not processing
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, [progress, startTime]);
 
   // Show toast notifications when upload completes or fails
   useEffect(() => {
     if (!progress) {
       hasShownCompletionToast.current = false;
+      setCompletionTime(null);
       return;
     }
 
     // Check if upload completed
     if (progress.status === 'completed' && !hasShownCompletionToast.current) {
       hasShownCompletionToast.current = true;
+
+      // Calculate final completion time
+      if (startTime) {
+        const finalTime = Math.floor((Date.now() - startTime) / 1000);
+        setCompletionTime(finalTime);
+      }
 
       // Check if there's a warning (e.g., empty CSV)
       if (progress.error_message || progress.message?.includes('no data')) {
@@ -43,19 +77,27 @@ export function UploadPage() {
     // Check if upload failed
     if (progress.status === 'failed' && !hasShownCompletionToast.current) {
       hasShownCompletionToast.current = true;
+      if (startTime) {
+        const finalTime = Math.floor((Date.now() - startTime) / 1000);
+        setCompletionTime(finalTime);
+      }
       const errorMsg = progress.error_message || progress.message || 'Upload failed';
       showError(errorMsg);
     }
-  }, [progress, showSuccess, showError, showWarning]);
+  }, [progress, showSuccess, showError, showWarning, startTime]);
 
   const uploadMutation = useMutation({
     mutationFn: uploadCSV,
     onMutate: () => {
       setTaskId(null);
+      setStartTime(null);
+      setElapsedTime(0);
+      setCompletionTime(null);
     },
     onSuccess: (data) => {
       // Backend returns { message, task: { task_id, ... } }
       setTaskId(data.task?.task_id);
+      setStartTime(Date.now());
       showSuccess('File uploaded successfully. Processing started.');
     },
     onError: (error) => {
@@ -74,6 +116,18 @@ export function UploadPage() {
       uploadMutation.reset();
       uploadMutation.mutate(lastUploadedFile);
     }
+  };
+
+  // Format time as MM:SS or HH:MM:SS
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
   };
 
   return (
@@ -121,6 +175,28 @@ export function UploadPage() {
 
           {progress && (
             <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-700">Upload Progress</h3>
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-mono text-gray-600">
+                    {progress.status === 'completed' || progress.status === 'failed'
+                      ? completionTime !== null
+                        ? formatTime(completionTime)
+                        : formatTime(elapsedTime)
+                      : formatTime(elapsedTime)
+                    }
+                  </span>
+                  {progress.status === 'completed' && (
+                    <span className="text-xs text-green-600 font-medium ml-2">✓ Completed</span>
+                  )}
+                  {progress.status === 'failed' && (
+                    <span className="text-xs text-red-600 font-medium ml-2">✗ Failed</span>
+                  )}
+                </div>
+              </div>
               <ProgressBar progress={progress} />
             </div>
           )}

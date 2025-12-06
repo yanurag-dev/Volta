@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchWebhooks, deleteWebhook, testWebhook, partialUpdateWebhook } from '../../services/webhooks';
+import { fetchWebhooks, deleteWebhook, testWebhook, updateWebhook } from '../../services/webhooks';
 import { useToast } from '../../hooks/useToast';
 
 export function WebhookList({ onEdit }) {
@@ -25,7 +25,7 @@ export function WebhookList({ onEdit }) {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: ({ id, active }) => partialUpdateWebhook(id, { active }),
+    mutationFn: ({ id, active }) => updateWebhook(id, { active }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['webhooks'] });
       showSuccess(`Webhook ${data.active ? 'enabled' : 'disabled'} successfully`);

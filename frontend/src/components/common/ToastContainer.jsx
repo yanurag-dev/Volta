@@ -1,4 +1,4 @@
-import { useToast } from '../../hooks/useToast';
+import { useToast } from '../../context/ToastContext';
 
 function Toast({ id, message, type, onClose }) {
   const styles = {
@@ -41,8 +41,8 @@ function Toast({ id, message, type, onClose }) {
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">{icons[safeType]}</div>
-          <div className="ml-3 flex-1 min-w-0">
-            <p className="text-sm font-medium break-words">{message}</p>
+          <div className="ml-3 w-0 flex-1">
+            <p className="text-sm font-medium">{message}</p>
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button

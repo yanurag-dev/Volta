@@ -1,0 +1,127 @@
+================================================================================
+RAILWAY ENVIRONMENT VARIABLES SETUP
+================================================================================
+
+Copy these environment variables to your Railway services:
+
+================================================================================
+📦 SERVICE: volta-web (Django Backend)
+================================================================================
+
+DJANGO_SETTINGS_MODULE=volta.settings.production
+SECRET_KEY=<GENERATE_USING_COMMAND_BELOW>
+DEBUG=False
+ALLOWED_HOSTS=.railway.app,.up.railway.app
+
+# Database (use Railway reference)
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+
+# Redis (use Railway reference)  
+REDIS_URL=${{Redis.REDIS_URL}}
+
+# RabbitMQ (get from CloudAMQP or Railway RabbitMQ template)
+CELERY_BROKER_URL=<PASTE_YOUR_RABBITMQ_URL>
+
+# CORS (update after deploying frontend)
+CORS_ALLOWED_ORIGINS=https://<your-frontend>.railway.app
+
+# Admin user credentials
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@volta.app
+DJANGO_SUPERUSER_PASSWORD=<CHANGE_THIS_PASSWORD>
+
+# File upload settings
+MAX_UPLOAD_SIZE=104857600
+
+# Security
+SECURE_SSL_REDIRECT=True
+
+# Logging
+LOG_LEVEL=INFO
+DJANGO_LOG_LEVEL=INFO
+CELERY_LOG_LEVEL=INFO
+
+# Database connection
+DB_CONN_MAX_AGE=600
+
+================================================================================
+📦 SERVICE: volta-celery-worker (Celery Worker)
+================================================================================
+
+# Copy ALL the same variables from volta-web service above
+# Railway tip: You can duplicate the service and just change the start command
+
+================================================================================
+📦 SERVICE: volta-frontend (React Frontend)
+================================================================================
+
+# Backend API URL (update with your backend Railway URL)
+VITE_API_URL=https://<your-backend>.railway.app/api
+
+================================================================================
+🔑 GENERATE SECRET_KEY
+================================================================================
+
+Run this command locally to generate a secure Django SECRET_KEY:
+
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+Or visit: https://djecrety.ir/
+
+================================================================================
+🐰 RABBITMQ SETUP OPTIONS
+================================================================================
+
+Option 1 - CloudAMQP (Recommended, Free Tier Available):
+1. Go to: https://www.cloudamqp.com/
+2. Sign up and create a "Little Lemur" instance (free)
+3. Copy the AMQP URL (starts with amqps://)
+4. Paste into CELERY_BROKER_URL
+
+Option 2 - Railway RabbitMQ Template:
+1. In Railway, click "+ New" → "Template"
+2. Search for "RabbitMQ"
+3. Deploy the template
+4. Copy the connection URL
+5. Paste into CELERY_BROKER_URL
+
+================================================================================
+🔗 SERVICE REFERENCES IN RAILWAY
+================================================================================
+
+When adding DATABASE_URL and REDIS_URL variables:
+1. Click on the variable input
+2. Select "Add Reference"
+3. Choose the appropriate service (Postgres or Redis)
+4. This ensures automatic updates if services change
+
+Example format: ${{Postgres.DATABASE_URL}}
+
+================================================================================
+📋 DEPLOYMENT ORDER
+================================================================================
+
+1. Add PostgreSQL service
+2. Add Redis service  
+3. Set up RabbitMQ (CloudAMQP or template)
+4. Deploy volta-web (with env variables)
+5. Deploy volta-celery-worker (same env variables)
+6. Deploy volta-frontend (with backend URL)
+7. Update volta-web CORS_ALLOWED_ORIGINS with frontend URL
+8. Test everything!
+
+================================================================================
+✅ POST-DEPLOYMENT CHECKLIST
+================================================================================
+
+[ ] All 5 services are running (Postgres, Redis, Web, Worker, Frontend)
+[ ] Backend is accessible at https://<backend>.railway.app/admin
+[ ] Frontend is accessible at https://<frontend>.railway.app
+[ ] Can login to Django admin
+[ ] Can upload CSV files
+[ ] Progress bar updates in real-time
+[ ] Celery worker processes tasks (check logs)
+[ ] Webhooks work correctly
+[ ] CORS is configured properly (no CORS errors in browser)
+
+================================================================================

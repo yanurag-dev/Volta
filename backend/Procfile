@@ -1,0 +1,5 @@
+# Procfile for Railway (alternative to Dockerfile CMD)
+# Railway will use Dockerfile CMD by default, but this is here as reference
+
+web: gunicorn volta.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
+worker: celery -A volta worker --loglevel=info --concurrency=4
