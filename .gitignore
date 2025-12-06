@@ -31,6 +31,7 @@ staticfiles/
 # Environment
 .env
 backend/.env
+backend/.env.production
 .venv
 env/
 venv/
@@ -63,6 +64,18 @@ htmlcov/
 
 # uploads
 uploads/
+
+# SSL Certificates
+ssl/
+nginx/ssl/
+*.pem
+*.crt
+*.key
+
+# Backups
+backups/
+*.sql
+*.sql.gz
 
 # Project documentation (personal notes)
 CLAUDE.md
