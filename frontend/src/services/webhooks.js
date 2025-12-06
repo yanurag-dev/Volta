@@ -21,6 +21,11 @@ export const updateWebhook = async (id, webhook) => {
   return response.data;
 };
 
+export const partialUpdateWebhook = async (id, webhook) => {
+  const response = await api.patch(`/webhooks/${id}/`, webhook);
+  return response.data;
+};
+
 export const deleteWebhook = async (id) => {
   const response = await api.delete(`/webhooks/${id}/`);
   return response.data;
