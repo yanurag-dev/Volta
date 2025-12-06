@@ -109,20 +109,11 @@ export const deleteProduct = async (id) => {
   }
 };
 
-export const bulkDeleteProducts = async (productIds) => {
+export const bulkDeleteProducts = async () => {
   try {
-    if (!Array.isArray(productIds) || productIds.length === 0) {
-      throw new Error('productIds must be a non-empty array');
-    }
-
-    const response = await api.delete('/products/bulk-delete/', {
-      data: { ids: productIds }
-    });
+    const response = await api.delete('/products/bulk-delete/');
     return response.data;
   } catch (error) {
-    if (error.message.includes('productIds must be')) {
-      throw error;
-    }
     handleApiError(error, 'Bulk deleting products');
   }
 };
