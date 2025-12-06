@@ -50,13 +50,17 @@ export function HomePage() {
           <Link
             key={feature.title}
             to={feature.link}
-            className="card hover:shadow-lg transition-all group"
+            className="card hover:shadow-xl hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out group cursor-pointer"
           >
-            <div className="text-primary-600 mb-4 group-hover:text-primary-700 transition-colors">
+            <div className="text-primary-600 mb-4 group-hover:text-primary-700 group-hover:scale-110 transition-all duration-300">
               {feature.icon}
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-            <p className="text-gray-600">{feature.description}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary-700 transition-colors">
+              {feature.title}
+            </h3>
+            <p className="text-gray-600 group-hover:text-gray-700 transition-colors">
+              {feature.description}
+            </p>
           </Link>
         ))}
       </div>

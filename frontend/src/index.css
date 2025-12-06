@@ -149,3 +149,13 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.5s ease-out;
 }
+
+/* Card hover glow effect */
+@keyframes cardGlow {
+  0%, 100% {
+    box-shadow: 0 10px 25px -5px rgba(90, 116, 152, 0.1), 0 8px 10px -6px rgba(90, 116, 152, 0.1);
+  }
+  50% {
+    box-shadow: 0 20px 40px -10px rgba(90, 116, 152, 0.2), 0 15px 25px -8px rgba(90, 116, 152, 0.15);
+  }
+}
