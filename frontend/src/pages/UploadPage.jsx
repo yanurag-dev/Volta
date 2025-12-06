@@ -9,6 +9,7 @@ import { useUploadProgress } from '../hooks/useUploadProgress';
 
 export function UploadPage() {
   const [taskId, setTaskId] = useState(null);
+  const [lastUploadedFile, setLastUploadedFile] = useState(null);
   const { progress } = useUploadProgress(taskId);
 
   const uploadMutation = useMutation({
@@ -23,7 +24,15 @@ export function UploadPage() {
   });
 
   const handleUpload = async (file) => {
+    setLastUploadedFile(file);
     uploadMutation.mutate(file);
+  };
+
+  const handleRetry = () => {
+    if (lastUploadedFile) {
+      uploadMutation.reset();
+      uploadMutation.mutate(lastUploadedFile);
+    }
   };
 
   return (
@@ -45,8 +54,27 @@ export function UploadPage() {
           />
 
           {uploadMutation.isError && (
-            <div className="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded">
-              Upload failed: {uploadMutation.error.message}
+            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="h-5 w-5 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+                <div className="ml-3 flex-1">
+                  <h3 className="text-sm font-medium text-red-800">Upload Failed</h3>
+                  <p className="mt-1 text-sm text-red-700">
+                    {uploadMutation.error?.response?.data?.error || uploadMutation.error?.message || 'An error occurred during upload'}
+                  </p>
+                  <button
+                    onClick={handleRetry}
+                    className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-md transition-colors"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Retry Upload
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
