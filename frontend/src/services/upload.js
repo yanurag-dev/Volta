@@ -29,7 +29,9 @@ export const getUploadStatus = async (taskId) => {
 export const getUploadHistory = async () => {
   const response = await api.get('/upload/history/');
   // Return the results array from paginated response
-  return response.data.results || response.data;
+  const data = response.data.results || response.data;
+  // Ensure we always return an array
+  return Array.isArray(data) ? data : [];
 };
 
 export const subscribeToUploadProgress = (taskId, onProgress, onError) => {

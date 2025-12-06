@@ -25,10 +25,21 @@ class UploadTask(models.Model):
         help_text="Celery task ID"
     )
     filename = models.CharField(max_length=255)
-    total_rows = models.IntegerField(default=0)
-    processed_rows = models.IntegerField(default=0)
-    successful_rows = models.IntegerField(default=0)
-    failed_rows = models.IntegerField(default=0)
+    
+    # Row counts
+    total_rows = models.IntegerField(default=0, help_text="Total rows in CSV file")
+    unique_products = models.IntegerField(default=0, help_text="Unique products after deduplication")
+    duplicate_rows = models.IntegerField(default=0, help_text="Duplicate rows removed")
+    
+    # Processing counts
+    processed_rows = models.IntegerField(default=0, help_text="Products processed so far")
+    successful_rows = models.IntegerField(default=0, help_text="Products successfully saved")
+    failed_rows = models.IntegerField(default=0, help_text="Products that failed")
+    
+    # Create/Update breakdown
+    created_count = models.IntegerField(default=0, help_text="New products created")
+    updated_count = models.IntegerField(default=0, help_text="Existing products updated")
+    
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -53,10 +64,12 @@ class UploadTask(models.Model):
 
     @property
     def progress_percentage(self):
-        """Calculate upload progress percentage."""
-        if self.total_rows == 0:
+        """Calculate upload progress percentage based on unique products."""
+        # Use unique_products if available, otherwise fall back to total_rows
+        total = self.unique_products if self.unique_products > 0 else self.total_rows
+        if total == 0:
             return 0
-        return round((self.processed_rows / self.total_rows) * 100, 2)
+        return round((self.processed_rows / total) * 100, 2)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

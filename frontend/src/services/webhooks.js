@@ -3,7 +3,9 @@ import api from './api';
 export const fetchWebhooks = async () => {
   const response = await api.get('/webhooks/');
   // Return the results array from paginated response
-  return response.data.results || response.data;
+  const data = response.data.results || response.data;
+  // Ensure we always return an array
+  return Array.isArray(data) ? data : [];
 };
 
 export const fetchWebhook = async (id) => {

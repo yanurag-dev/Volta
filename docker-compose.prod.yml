@@ -107,11 +107,11 @@ services:
     networks:
       - volta_network
 
-  # React Frontend
+  # React Frontend (Production build with nginx)
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
       args:
         - VITE_API_URL=/api
     container_name: volta_frontend_prod

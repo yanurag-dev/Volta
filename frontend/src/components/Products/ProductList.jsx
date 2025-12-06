@@ -89,7 +89,8 @@ export function ProductList({ filters, onEdit }) {
     );
   }
 
-  const products = data?.results || [];
+  // Ensure products is always an array
+  const products = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
   const totalPages = data?.count ? Math.ceil(data.count / pageSize) : 0;
 
   if (products.length === 0) {
