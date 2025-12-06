@@ -66,11 +66,11 @@ print_info "Generating secure credentials..."
 # Generate SECRET_KEY (64 characters)
 SECRET_KEY=$(python3 -c "import secrets; import string; chars = string.ascii_letters + string.digits + string.punctuation; print(''.join(secrets.choice(chars) for _ in range(64)))" | sed 's/[$]/\\$/g')
 
-# Generate DB password (32 characters, alphanumeric + symbols)
-DB_PASSWORD=$(python3 -c "import secrets; import string; chars = string.ascii_letters + string.digits + '!@#%^&*'; print(''.join(secrets.choice(chars) for _ in range(32)))")
+# Generate DB password (32 characters, alphanumeric only - safe for URLs)
+DB_PASSWORD=$(python3 -c "import secrets; import string; chars = string.ascii_letters + string.digits; print(''.join(secrets.choice(chars) for _ in range(32)))")
 
-# Generate RabbitMQ password (32 characters)
-RABBITMQ_PASSWORD=$(python3 -c "import secrets; import string; chars = string.ascii_letters + string.digits + '!@#%^&*'; print(''.join(secrets.choice(chars) for _ in range(32)))")
+# Generate RabbitMQ password (32 characters, alphanumeric only - safe for URLs)
+RABBITMQ_PASSWORD=$(python3 -c "import secrets; import string; chars = string.ascii_letters + string.digits; print(''.join(secrets.choice(chars) for _ in range(32)))")
 
 print_success "Credentials generated!"
 echo ""
