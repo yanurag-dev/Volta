@@ -19,14 +19,38 @@ export function ProgressBar({ progress }) {
   const getStatusText = () => {
     switch (status) {
       case 'completed':
-        return 'Completed';
+        return 'Import Complete';
       case 'failed':
-        return 'Failed';
+        return 'Import Failed';
       case 'processing':
-        return 'Processing';
+        // Show different messages based on progress
+        if (percentage === 0) {
+          return 'Parsing CSV';
+        } else if (percentage < 10) {
+          return 'Validating Products';
+        } else if (percentage < 100) {
+          return 'Importing Products';
+        } else {
+          return 'Finalizing';
+        }
       default:
         return 'Pending';
     }
+  };
+
+  const getDetailedStatus = () => {
+    if (status === 'processing') {
+      if (percentage === 0) {
+        return 'Reading and parsing CSV file...';
+      } else if (percentage < 10) {
+        return 'Validating product data...';
+      } else if (percentage < 100) {
+        return 'Importing products into database...';
+      } else {
+        return 'Completing import process...';
+      }
+    }
+    return null;
   };
 
   return (
@@ -71,7 +95,7 @@ export function ProgressBar({ progress }) {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <span>Processing CSV file...</span>
+          <span>{getDetailedStatus()}</span>
         </div>
       )}
 
