@@ -207,10 +207,13 @@ def upload_history(request):
     Returns paginated list of upload tasks ordered by creation date.
     """
     try:
-        tasks = UploadTask.objects.all().order_by('-created_at')[:50]
-        serializer = UploadTaskListSerializer(tasks, many=True)
+        # Get total count before slicing
+        queryset = UploadTask.objects.all().order_by('-created_at')
+        count = queryset.count()
 
-        count = tasks.count()
+        # Slice to get recent tasks
+        tasks = queryset[:50]
+        serializer = UploadTaskListSerializer(tasks, many=True)
 
         return Response({
             'count': count,

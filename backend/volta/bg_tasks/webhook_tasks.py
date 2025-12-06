@@ -26,7 +26,8 @@ def send_webhook_task(self, webhook_id, event, payload):
     if webhook_id:
         webhooks = Webhook.objects.filter(id=webhook_id, active=True)
     else:
-        webhooks = Webhook.objects.filter(active=True, events__contains=[event])
+        # Use __overlap to check if event is in the JSONField array
+        webhooks = Webhook.objects.filter(active=True, events__overlap=[event])
 
     if not webhooks.exists():
         return {
