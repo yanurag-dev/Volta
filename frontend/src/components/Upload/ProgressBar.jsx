@@ -5,7 +5,7 @@ export function ProgressBar({ progress }) {
   const [uploadSpeed, setUploadSpeed] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState(null);
   const [currentTip, setCurrentTip] = useState(0);
-  const prevProgressRef = useRef({ current: 0, timestamp: Date.now() });
+  const prevProgressRef = useRef({ current: 0, timestamp: 0 });
 
   // Extract values with defaults (safe even if progress is null)
   const { current = 0, total = 0, percentage = 0, status = 'pending', errors = [] } = progress || {};
@@ -29,6 +29,13 @@ export function ProgressBar({ progress }) {
   useEffect(() => {
     if (status === 'processing' && current > 0) {
       const now = Date.now();
+      
+      // Initialize timestamp on first run
+      if (prevProgressRef.current.timestamp === 0) {
+        prevProgressRef.current = { current, timestamp: now };
+        return;
+      }
+      
       const timeDiff = (now - prevProgressRef.current.timestamp) / 1000; // seconds
       const rowsDiff = current - prevProgressRef.current.current;
 
