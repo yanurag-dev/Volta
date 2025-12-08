@@ -75,7 +75,7 @@ services:
   celery_worker:
     build: ./backend
     container_name: volta_celery_worker
-    command: sh -c "celery -A volta worker --loglevel=info --concurrency=$${CELERY_WORKER_CONCURRENCY:-8} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
+    command: sh -c "celery -A volta worker --loglevel=info --concurrency=$${CELERY_WORKER_CONCURRENCY:-2} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
     volumes:
       - ./backend:/app
       - media_files:/app/media
@@ -92,7 +92,7 @@ services:
       - DATABASE_URL=postgresql://volta_user:volta_password@db:5432/volta
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=amqp://volta:volta_password@rabbitmq:5672//
-      - CELERY_WORKER_CONCURRENCY=${CELERY_WORKER_CONCURRENCY:-8}
+      - CELERY_WORKER_CONCURRENCY=${CELERY_WORKER_CONCURRENCY:-2}
       - CELERY_WORKER_PREFETCH_MULTIPLIER=${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}
 
   # Celery Beat (Optional - for scheduled tasks)
