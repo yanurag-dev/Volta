@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 
 export function ProgressBar({ progress }) {
-  // Track progress for speed calculation - hooks MUST be called before any early returns
+  // ALL hooks MUST be declared at the top before any early returns
   const [uploadSpeed, setUploadSpeed] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState(null);
   const [currentTip, setCurrentTip] = useState(0);
   const prevProgressRef = useRef({ current: 0, timestamp: Date.now() });
 
-  // Early return AFTER all hooks are declared
-  if (!progress) return null;
-
-  const { current = 0, total = 0, percentage = 0, status = 'pending', errors = [] } = progress;
+  // Extract values with defaults (safe even if progress is null)
+  const { current = 0, total = 0, percentage = 0, status = 'pending', errors = [] } = progress || {};
   
   // Ensure errors is always an array
   const errorsList = Array.isArray(errors) ? errors : [];
@@ -56,6 +54,9 @@ export function ProgressBar({ progress }) {
       return () => clearInterval(interval);
     }
   }, [status, tips.length]);
+
+  // Early return AFTER all hooks are declared
+  if (!progress) return null;
 
   const formatTime = (seconds) => {
     if (!seconds || !isFinite(seconds)) return 'Calculating...';
