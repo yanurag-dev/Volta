@@ -9,6 +9,8 @@ A highly scalable web application for importing 500,000+ products from CSV files
 - **Frontend**: [http://3.82.100.106](http://3.82.100.106)
 - **API**: [http://3.82.100.106/api](http://3.82.100.106/api)
 - **Django Admin**: [http://3.82.100.106/admin](http://3.82.100.106/admin)
+  - Username: `admin`
+  - Password: `Admin@123aws`
 
 ---
 
@@ -69,58 +71,73 @@ git clone https://github.com/yourusername/Volta.git
 cd Volta
 ```
 
-### 2. Environment Setup
+### 2. Start Services with Docker Compose
 
-Create environment file for backend:
+**Note**: No `.env` file needed! The project uses sensible defaults for local development.
 
 ```bash
-cp backend/.env.example backend/.env
+docker-compose up --build
 ```
 
-Edit `backend/.env` and update the following variables:
+**Optional**: Create a `backend/.env` file to override defaults:
 
 ```env
 SECRET_KEY=your-secret-key-here-change-in-production
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+DATABASE_URL=postgresql://volta_user:volta_password@db:5432/volta
+REDIS_URL=redis://redis:6379/0
+CELERY_BROKER_URL=amqp://volta:volta_password@rabbitmq:5672//
 ```
 
-### 3. Start Services with Docker Compose
+### 3. What Gets Started
 
-```bash
-docker-compose up --build
-```
+Docker Compose will start all services:
 
-This will start:
+- **PostgreSQL** (port 5432)
+- **Redis** (port 6379)
+- **RabbitMQ** (ports 5672, 15672 for management UI)
+- **Django Web App** (port 8000)
+- **Celery Worker** (2 concurrent workers)
+- **Celery Beat** (for scheduled tasks)
+- **React Frontend** (port 3000)
 
-- PostgreSQL (port 5432)
-- Redis (port 6379)
-- RabbitMQ (port 5672, Management UI: 15672)
-- Django Web App (port 8000)
-- Celery Worker
-- Celery Beat
-- React Frontend (port 3000)
+**Database migrations run automatically on startup!**
 
-### 4. Run Database Migrations
+### 4. Create Admin User (First Time Only)
 
-In a new terminal:
+The admin user is created automatically on first startup.
 
-```bash
-docker-compose exec web python manage.py migrate
-```
+**Default credentials for local development:**
+- Username: `admin`
+- Password: `admin`
 
-### 5. Create Superuser (Optional)
+**Production (EC2) credentials:**
+- Username: `admin`
+- Password: `Admin@123aws`
+
+**To create additional users:**
 
 ```bash
 docker-compose exec web python manage.py createsuperuser
 ```
 
-### 6. Access the Application
+**To customize admin credentials locally**, set environment variables:
+
+```bash
+export DJANGO_SUPERUSER_USERNAME=yourusername
+export DJANGO_SUPERUSER_PASSWORD=yourpassword
+docker-compose up --build
+```
+
+### 5. Access the Application
 
 - **Frontend**: <http://localhost:3000>
 - **Backend API**: <http://localhost:8000/api>
 - **Django Admin**: <http://localhost:8000/admin>
+  - Username: `admin`
+  - Password: `Admin@123aws`
 - **RabbitMQ Management**: <http://localhost:15672> (user: `volta`, pass: `volta_password`)
 
 ---
@@ -243,18 +260,57 @@ PROD-002,Another Product,Description text,false
 - `description` - Product description
 - `active` - Boolean (true/false, defaults to true)
 
+### How CSV Processing Works
+
+1. **Upload**: File is saved and queued to Celery
+2. **Async Processing**: Celery worker processes the file in background
+3. **Deduplication**: Duplicate SKUs are automatically handled (last entry wins)
+4. **Bulk Import**: Uses PostgreSQL UPSERT for maximum speed (50,000 products per batch)
+5. **Progress Tracking**: Real-time updates via Server-Sent Events (SSE)
+6. **Webhooks**: Notifications sent on completion
+
+**Processing Speed**: ~250,000 products/minute with default configuration
+
 ---
 
 ## 🎯 Performance Benchmarks
 
 | Metric | Performance |
 |--------|-------------|
-| Upload 500k products | **< 2 minutes** (8 workers) ⚡ |
+| Upload 500k products | **< 2 minutes per file** ⚡ |
+| Concurrent uploads | **Up to 2 simultaneous files** (optimized for 4GB RAM) |
+| CSV processing | Async via Celery + PostgreSQL UPSERT |
+| Processing speed | ~250,000 products/minute |
 | API response (list products) | < 100ms (with pagination) |
-| Progress update frequency | Real-time (1-2 seconds) |
-| Concurrent uploads | 5-10 simultaneous |
+| Progress update frequency | Real-time (1-2 seconds) via SSE |
 | Database query time | < 50ms (with indexes) |
 | Webhook delivery | < 3 seconds (with retries) |
+
+---
+
+## 💻 Resource Requirements
+
+### Minimum (Development)
+- **RAM**: 2 GB
+- **CPU**: 2 cores
+- **Storage**: 5 GB
+
+### Recommended (Production)
+- **RAM**: 4 GB (current EC2 configuration)
+- **CPU**: 2-4 cores
+- **Storage**: 20 GB
+- **Network**: Standard bandwidth
+
+### Production Configuration (4GB RAM)
+- **Gunicorn Workers**: 2 (Django API)
+- **Celery Workers**: 2 (CSV processing)
+- **Concurrent CSV Uploads**: Up to 2 simultaneous files
+- **Database Connections**: Pooled with max 20 connections
+
+### Scaling Recommendations
+- **8GB RAM**: Increase to 4 Celery workers for 4 concurrent uploads
+- **16GB RAM**: Increase to 8 Celery workers for 8 concurrent uploads
+- **High Traffic**: Add load balancer + multiple app instances
 
 ---
 
@@ -335,26 +391,48 @@ npm run test
 ```text
 Volta/
 ├── backend/
-│   └── volta/              # Main Django app
-│       ├── settings/       # Split settings (base, dev, prod)
-│       ├── celery.py       # Celery configuration
-│       └── ...
-│   ├── products/           # Product app (models, views, serializers)
-│   ├── uploads/            # Upload app (CSV processing)
-│   ├── webhooks/           # Webhook app
+│   ├── volta/              # Main Django project
+│   │   ├── settings/       # Split settings (base, dev, prod)
+│   │   ├── api/            # REST API endpoints
+│   │   │   ├── views/      # API views (products, uploads, webhooks)
+│   │   │   └── serializers/ # DRF serializers
+│   │   ├── db/             # Database models and admin
+│   │   │   ├── models/     # Models (Product, UploadTask, Webhook)
+│   │   │   ├── migrations/ # Database migrations
+│   │   │   ├── management/ # Custom management commands
+│   │   │   └── admin.py    # Django admin configuration
+│   │   ├── bg_tasks/       # Celery background tasks
+│   │   │   ├── csv_tasks.py    # CSV processing tasks
+│   │   │   └── webhook_tasks.py # Webhook delivery tasks
+│   │   ├── utils/          # Utility functions
+│   │   ├── celery.py       # Celery configuration
+│   │   ├── urls.py         # URL routing
+│   │   ├── wsgi.py         # WSGI application
+│   │   └── asgi.py         # ASGI application
 │   ├── manage.py
 │   ├── requirements.txt
-│   └── Dockerfile
+│   ├── Dockerfile
+│   └── entrypoint.sh
 ├── frontend/
 │   ├── src/
 │   │   ├── components/     # React components
+│   │   │   ├── Products/   # Product management components
+│   │   │   ├── Upload/     # CSV upload components
+│   │   │   ├── Webhooks/   # Webhook management components
+│   │   │   └── common/     # Shared components
+│   │   ├── pages/          # Page components
 │   │   ├── services/       # API services
 │   │   ├── hooks/          # Custom hooks
+│   │   ├── context/        # React context providers
 │   │   └── App.jsx
 │   ├── package.json
-│   └── Dockerfile
+│   ├── Dockerfile.dev
+│   └── Dockerfile.prod
+├── deploy/                 # Deployment scripts
+│   ├── deploy-ec2.sh
+│   └── scripts/
+├── nginx/                  # Nginx configuration
 ├── docker-compose.yml
-├── CLAUDE.md              # Project documentation
 └── README.md
 ```
 

@@ -60,7 +60,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: volta_web_prod
-    command: gunicorn volta.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 300
+    command: gunicorn volta.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 300
     volumes:
       - media_files:/app/media
       - static_files:/app/staticfiles
@@ -91,7 +91,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: volta_celery_worker_prod
-    command: celery -A volta worker --loglevel=info --concurrency=4
+    command: celery -A volta worker --loglevel=info --concurrency=2
     volumes:
       - media_files:/app/media
     env_file:
